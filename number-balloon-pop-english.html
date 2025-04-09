@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Balloon Pop Game</title>
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #E0F2FE; /* sky-100 */
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #1D4ED8; /* blue-700 */
+      margin-bottom: 1rem;
+    }
+    
+    /* Game stats bar */
+    .game-stats {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 28rem;
+      margin-bottom: 1rem;
+    }
+    
+    .stat {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    /* Button styles */
+    .btn {
+      background-color: #10B981; /* green-500 */
+      color: white;
+      font-size: 1.25rem;
+      font-weight: bold;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #059669; /* green-600 */
+    }
+    
+    /* Target number box */
+    .target-box {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 28rem;
+      text-align: center;
+    }
+    
+    .target-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .target-number {
+      font-size: 7rem;
+      font-weight: bold;
+      color: #2563EB; /* blue-600 */
+      margin: 0.5rem 0;
+    }
+    
+    /* Message area */
+    .message {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      height: 2rem;
+    }
+    
+    .success {
+      color: #059669; /* green-600 */
+    }
+    
+    .error {
+      color: #DC2626; /* red-600 */
+    }
+    
+    /* Balloon container */
+    .balloon-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      max-width: 32rem;
+    }
+    
+    /* Balloon styles */
+    .balloon {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .balloon:hover {
+      transform: scale(1.1);
+    }
+    
+    .balloon.popped {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+    
+    .balloon::after {
+      content: '';
+      position: absolute;
+      bottom: -40px;
+      left: 50%;
+      width: 2px;
+      height: 40px;
+      background-color: #9CA3AF; /* gray-400 */
+      transform: translateX(-50%);
+    }
+    
+    .balloon-number {
+      color: white;
+      font-size: 2.875rem;
+      font-weight: bold;
+    }
+    
+    /* Balloon colors */
+    .bg-red { background-color: #F87171; /* red-400 */ }
+    .bg-blue { background-color: #60A5FA; /* blue-400 */ }
+    .bg-green { background-color: #34D399; /* green-400 */ }
+    .bg-yellow { background-color: #FBBF24; /* yellow-400 */ }
+    .bg-purple { background-color: #A78BFA; /* purple-400 */ }
+    .bg-pink { background-color: #F472B6; /* pink-400 */ }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Number Balloon Pop Game</h1>
+    
+    <div id="start-screen">
+      <p style="font-size: 1.25rem; margin-bottom: 1rem;">Click balloons to learn numbers!</p>
+      <button id="start-btn" class="btn">Start Game</button>
+    </div>
+    
+    <div id="game-content" style="display: none; width: 100%; max-width: 32rem;">
+      <div class="game-stats">
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Level: <span id="level">1</span>/10</div>
+      </div>
+      
+      <div class="target-box">
+        <h2 class="target-title">Find and click the number:</h2>
+        <p class="target-number" id="target-number">1</p>
+      </div>
+      
+      <div id="message" class="message"></div>
+      
+      <div id="balloon-container" class="balloon-container"></div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Game state
+      let balloons = [];
+      let targetNumber = null;
+      let score = 0;
+      let level = 1;
+      let gameActive = false;
+      
+      // DOM elements
+      const startScreen = document.getElementById('start-screen');
+      const gameContent = document.getElementById('game-content');
+      const startBtn = document.getElementById('start-btn');
+      const scoreDisplay = document.getElementById('score');
+      const levelDisplay = document.getElementById('level');
+      const targetNumberDisplay = document.getElementById('target-number');
+      const messageDisplay = document.getElementById('message');
+      const balloonContainer = document.getElementById('balloon-container');
+      
+      // Start game
+      startBtn.addEventListener('click', startGame);
+      
+      function startGame() {
+        startScreen.style.display = 'none';
+        gameContent.style.display = 'flex';
+        gameContent.style.flexDirection = 'column';
+        gameContent.style.alignItems = 'center';
+        
+        score = 0;
+        level = 1;
+        gameActive = true;
+        
+        scoreDisplay.textContent = score;
+        levelDisplay.textContent = level;
+        
+        generateRound(level);
+      }
+      
+      // Generate a new round of balloons
+      function generateRound(currentLevel) {
+        // Clear previous round
+        balloonContainer.innerHTML = '';
+        messageDisplay.textContent = '';
+        messageDisplay.className = 'message';
+        
+        // Determine max number based on level
+        const maxNumber = Math.min(currentLevel + 4, 10);
+        
+        // Generate number balloons from 1 to maxNumber
+        balloons = [];
+        for (let i = 1; i <= maxNumber; i++) {
+          const color = getRandomColor();
+          const size = Math.floor(Math.random() * 20) + 60; // 60-80px
+          
+          balloons.push({
+            id: i,
+            number: i,
+            color: color,
+            size: size,
+            popped: false
+          });
+        }
+        
+        // Randomly select target number
+        targetNumber = Math.floor(Math.random() * maxNumber) + 1;
+        targetNumberDisplay.textContent = targetNumber;
+        
+        // Shuffle balloons
+        balloons = shuffleArray(balloons);
+        
+        // Render balloons
+        balloons.forEach(balloon => {
+          const balloonElement = document.createElement('div');
+          balloonElement.className = `balloon ${balloon.color}`;
+          balloonElement.style.width = `${balloon.size}px`;
+          balloonElement.style.height = `${balloon.size}px`;
+          balloonElement.dataset.id = balloon.id;
+          
+          const numberElement = document.createElement('span');
+          numberElement.className = 'balloon-number';
+          numberElement.textContent = balloon.number;
+          
+          balloonElement.appendChild(numberElement);
+          balloonElement.addEventListener('click', () => handleBalloonClick(balloon.id));
+          
+          balloonContainer.appendChild(balloonElement);
+        });
+      }
+      
+      // Random color generator
+      function getRandomColor() {
+        const colors = ['bg-red', 'bg-blue', 'bg-green', 'bg-yellow', 'bg-purple', 'bg-pink'];
+        return colors[Math.floor(Math.random() * colors.length)];
+      }
+      
+      // Handle balloon click
+      function handleBalloonClick(id) {
+        if (!gameActive) return;
+        
+        // Find the clicked balloon
+        const balloonIndex = balloons.findIndex(balloon => balloon.id === id);
+        if (balloonIndex === -1) return;
+        
+        const clickedBalloon = balloons[balloonIndex];
+        
+        // Check if it's the target number
+        if (clickedBalloon.number === targetNumber) {
+          // Mark balloon as popped
+          clickedBalloon.popped = true;
+          
+          // Update balloon display
+          const balloonElement = balloonContainer.children[balloonIndex];
+          balloonElement.classList.add('popped');
+          
+          // Increase score
+          score++;
+          scoreDisplay.textContent = score;
+          
+          // Show success message
+          messageDisplay.textContent = 'Great job!';
+          messageDisplay.className = 'message success';
+          
+          // Delay before next round
+          setTimeout(() => {
+            // Increase difficulty
+            level++;
+            levelDisplay.textContent = level;
+            
+            // If max level reached, end game
+            if (level > 10) {
+              gameActive = false;
+              messageDisplay.textContent = 'Congratulations! You completed all levels!';
+              messageDisplay.className = 'message success';
+              
+              // Show restart button
+              setTimeout(() => {
+                gameContent.style.display = 'none';
+                startScreen.style.display = 'block';
+              }, 3000);
+            } else {
+              generateRound(level);
+            }
+          }, 1500);
+        } else {
+          // Show error message
+          messageDisplay.textContent = 'Try again!';
+          messageDisplay.className = 'message error';
+          
+          // Clear message after delay
+          setTimeout(() => {
+            messageDisplay.textContent = '';
+            messageDisplay.className = 'message';
+          }, 1000);
+        }
+      }
+      
+      // Fisher-Yates shuffle algorithm
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+    });
+  </script>
+</body>
+</html>

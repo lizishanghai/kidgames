@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Sorting Game</title>
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #F0FDF4; /* green-50 */
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #15803D; /* green-700 */
+      margin-bottom: 1rem;
+    }
+    
+    /* Game stats bar */
+    .game-stats {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 28rem;
+      margin-bottom: 1rem;
+    }
+    
+    .stat {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    /* Button styles */
+    .btn {
+      background-color: #10B981; /* green-500 */
+      color: white;
+      font-size: 1.25rem;
+      font-weight: bold;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #059669; /* green-600 */
+    }
+    
+    /* Message area */
+    .message {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      height: 2rem;
+    }
+    
+    .success {
+      color: #059669; /* green-600 */
+    }
+    
+    .error {
+      color: #DC2626; /* red-600 */
+    }
+    
+    /* Bins container */
+    .bins-container {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    
+    .bin {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .bin-area {
+      background-color: white;
+      border: 4px dashed #9CA3AF; /* gray-400 */
+      border-radius: 0.5rem;
+      padding: 1rem;
+      width: 12rem;
+      height: 12rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .bin-name {
+      font-size: 1.125rem;
+      font-weight: bold;
+      text-align: center;
+    }
+    
+    /* Shapes container */
+    .shapes-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      max-width: 36rem;
+      margin-top: 1rem;
+    }
+    
+    .shape {
+      background-color: transparent;
+      border: 2px solid #4B5563; /* gray-600 */
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s;
+    }
+    
+    .shape:hover {
+      transform: scale(1.1);
+    }
+    
+    .shape.in-bin {
+      width: 3rem;
+      height: 3rem;
+      padding: 0.25rem;
+      border-width: 1px;
+      cursor: default;
+    }
+    
+    .shape.in-bin .shape-inner {
+      width: 2rem;
+      height: 2rem;
+    }
+    
+    .shape.in-bin .star {
+      font-size: 2rem;
+    }
+    
+    /* Shape styles */
+    .shape-inner {
+      width: 4rem;
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .circle {
+      border-radius: 50%;
+    }
+    
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 2rem solid transparent;
+      border-right: 2rem solid transparent;
+      border-bottom: 3.5rem solid;
+      background-color: transparent !important;
+    }
+    
+    .rectangle {
+      width: 5rem;
+      height: 3rem;
+    }
+    
+    .star {
+      font-size: 3rem;
+    }
+    
+    /* Background colors */
+    .bg-red { background-color: #F87171; /* red-400 */ }
+    .bg-blue { background-color: #60A5FA; /* blue-400 */ }
+    .bg-green { background-color: #34D399; /* green-400 */ }
+    .bg-yellow { background-color: #FBBF24; /* yellow-400 */ }
+    .bg-purple { background-color: #A78BFA; /* purple-400 */ }
+    
+    /* Triangle colors */
+    .triangle.border-red { border-bottom-color: #F87171; /* red-400 */ }
+    .triangle.border-blue { border-bottom-color: #60A5FA; /* blue-400 */ }
+    .triangle.border-green { border-bottom-color: #34D399; /* green-400 */ }
+    .triangle.border-yellow { border-bottom-color: #FBBF24; /* yellow-400 */ }
+    .triangle.border-purple { border-bottom-color: #A78BFA; /* purple-400 */ }
+    
+    /* Game instructions */
+    .instructions {
+      margin-top: 2rem;
+      text-align: center;
+    }
+    
+    .instructions p {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #4B5563; /* gray-700 */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Shape Sorting Game</h1>
+    
+    <div id="start-screen">
+      <p style="font-size: 1.25rem; margin-bottom: 1rem;">Drag and drop shapes to the correct bins!</p>
+      <button id="start-btn" class="btn">Start Game</button>
+    </div>
+    
+    <div id="game-content" style="display: none; width: 100%; align-items: center;">
+      <div class="game-stats">
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Level: <span id="level">1</span>/7</div>
+      </div>
+      
+      <div id="message" class="message"></div>
+      
+      <div id="bins-container" class="bins-container"></div>
+      
+      <div id="shapes-container" class="shapes-container"></div>
+      
+      <div class="instructions">
+        <p>Drag shapes to their matching bins!</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Game state
+      let shapes = [];
+      let bins = [];
+      let score = 0;
+      let level = 1;
+      let gameActive = false;
+      
+      // Shape definitions
+      const shapeTypes = {
+        circle: {
+          name: 'Circle',
+          create: () => {
+            const shape = document.createElement('div');
+            shape.className = 'shape-inner circle';
+            return shape;
+          }
+        },
+        square: {
+          name: 'Square',
+          create: () => {
+            const shape = document.createElement('div');
+            shape.className = 'shape-inner';
+            return shape;
+          }
+        },
+        triangle: {
+          name: 'Triangle',
+          create: () => {
+            const shape = document.createElement('div');
+            shape.className = 'shape-inner triangle';
+            return shape;
+          }
+        },
+        rectangle: {
+          name: 'Rectangle',
+          create: () => {
+            const shape = document.createElement('div');
+            shape.className = 'shape-inner rectangle';
+            return shape;
+          }
+        },
+        star: {
+          name: 'Star',
+          create: () => {
+            const shape = document.createElement('div');
+            shape.className = 'shape-inner star';
+            shape.textContent = '★';
+            return shape;
+          }
+        }
+      };
+      
+      // DOM elements
+      const startScreen = document.getElementById('start-screen');
+      const gameContent = document.getElementById('game-content');
+      const startBtn = document.getElementById('start-btn');
+      const scoreDisplay = document.getElementById('score');
+      const levelDisplay = document.getElementById('level');
+      const messageDisplay = document.getElementById('message');
+      const binsContainer = document.getElementById('bins-container');
+      const shapesContainer = document.getElementById('shapes-container');
+      
+      // Start game
+      startBtn.addEventListener('click', startGame);
+      
+      function startGame() {
+        startScreen.style.display = 'none';
+        gameContent.style.display = 'flex';
+        gameContent.style.flexDirection = 'column';
+        
+        score = 0;
+        level = 1;
+        gameActive = true;
+        
+        scoreDisplay.textContent = score;
+        levelDisplay.textContent = level;
+        
+        generateRound(level);
+      }
+      
+      // Generate a new round
+      function generateRound(currentLevel) {
+        // Clear previous round
+        binsContainer.innerHTML = '';
+        shapesContainer.innerHTML = '';
+        messageDisplay.textContent = '';
+        messageDisplay.className = 'message';
+        
+        // Select shape types based on level
+        let shapeTypeNames = ['circle', 'square', 'triangle'];
+        if (currentLevel > 2) shapeTypeNames.push('rectangle');
+        if (currentLevel > 4) shapeTypeNames.push('star');
+        
+        // Select 2-3 shape types for this round
+        const numShapeTypes = Math.min(Math.floor(currentLevel / 2) + 2, shapeTypeNames.length);
+        const roundShapeTypeNames = shuffleArray(shapeTypeNames).slice(0, numShapeTypes);
+        
+        // Create shape bins
+        bins = roundShapeTypeNames.map(typeName => ({
+          id: typeName,
+          type: typeName,
+          name: shapeTypes[typeName].name
+        }));
+        
+        // Create bins for each shape type
+        bins.forEach(bin => {
+          const binElement = document.createElement('div');
+          binElement.className = 'bin';
+          
+          const binArea = document.createElement('div');
+          binArea.className = 'bin-area';
+          binArea.dataset.type = bin.type;
+          
+          // Add drag and drop events
+          binArea.addEventListener('dragover', handleDragOver);
+          binArea.addEventListener('drop', handleDrop);
+          
+          const binName = document.createElement('p');
+          binName.className = 'bin-name';
+          binName.textContent = bin.name;
+          
+          binArea.appendChild(binName);
+          binElement.appendChild(binArea);
+          binsContainer.appendChild(binElement);
+        });
+        
+        // Create shapes to be sorted
+        const numShapes = Math.min(currentLevel * 2 + 4, 12);
+        shapes = [];
+        
+        for (let i = 0; i < numShapes; i++) {
+          // Randomly select a shape type
+          const shapeType = roundShapeTypeNames[Math.floor(Math.random() * roundShapeTypeNames.length)];
+          
+          // Random color
+          const colors = ['red', 'blue', 'green', 'yellow', 'purple'];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          
+          shapes.push({
+            id: i,
+            type: shapeType,
+            color: color,
+            sorted: false
+          });
+        }
+        
+        // Render shapes
+        shapes.forEach(shape => {
+          const shapeElement = document.createElement('div');
+          shapeElement.className = 'shape';
+          shapeElement.id = `shape-${shape.id}`;
+          shapeElement.draggable = true;
+          shapeElement.dataset.id = shape.id;
+          shapeElement.dataset.type = shape.type;
+          
+          // Add drag events
+          shapeElement.addEventListener('dragstart', handleDragStart);
+          shapeElement.addEventListener('dragend', handleDragEnd);
+          
+          // Create shape inner element
+          const shapeInner = shapeTypes[shape.type].create();
+          if (shape.type === 'triangle') {
+            shapeInner.classList.add(`border-${shape.color}`);
+          } else {
+            shapeInner.classList.add(`bg-${shape.color}`);
+          }
+          
+          shapeElement.appendChild(shapeInner);
+          shapesContainer.appendChild(shapeElement);
+        });
+      }
+      
+      // Drag start
+      function handleDragStart(e) {
+        const shapeId = Number(e.target.dataset.id);
+        const shape = shapes.find(s => s.id === shapeId);
+        
+        if (shape && !shape.sorted) {
+          e.dataTransfer.setData('text/plain', shapeId);
+          e.target.style.opacity = '0.5';
+        }
+      }
+      
+      // Drag end
+      function handleDragEnd(e) {
+        e.target.style.opacity = '1';
+      }
+      
+      // Drag over
+      function handleDragOver(e) {
+        e.preventDefault(); // Allow drop
+      }
+      
+      // Drop
+      function handleDrop(e) {
+        e.preventDefault();
+        
+        const shapeId = Number(e.dataTransfer.getData('text/plain'));
+        const binType = e.target.dataset.type || e.target.parentElement.dataset.type;
+        
+        if (isNaN(shapeId) || !binType) return;
+        
+        const shape = shapes.find(s => s.id === shapeId);
+        if (!shape || shape.sorted) return;
+        
+        // Check if dropped in correct bin
+        if (shape.type === binType) {
+          // Mark shape as sorted
+          shape.sorted = true;
+          
+          // Move shape to bin
+          const shapeElement = document.getElementById(`shape-${shapeId}`);
+          if (shapeElement) {
+            // Disable dragging
+            shapeElement.draggable = false;
+            // Move to bin
+            e.target.appendChild(shapeElement);
+            // Adjust styles
+            shapeElement.style.position = 'static';
+            shapeElement.style.transform = 'none';
+            shapeElement.style.cursor = 'default';
+            shapeElement.style.opacity = '1';
+            shapeElement.style.pointerEvents = 'none';
+          }
+          
+          // Increase score
+          score++;
+          scoreDisplay.textContent = score;
+          
+          // Show success message
+          messageDisplay.textContent = 'Correct!';
+          messageDisplay.className = 'message success';
+          
+          setTimeout(() => {
+            messageDisplay.textContent = '';
+            messageDisplay.className = 'message';
+          }, 800);
+          
+          // Check if all shapes sorted
+          if (shapes.every(s => s.sorted)) {
+            // Show success message
+            messageDisplay.textContent = 'Great job!';
+            messageDisplay.className = 'message success';
+            
+            // Delay before next round
+            setTimeout(() => {
+              // Increase level
+              level++;
+              levelDisplay.textContent = level;
+              
+              // Level cap at 7
+              if (level > 7) {
+                gameActive = false;
+                messageDisplay.textContent = 'Congratulations! You completed all levels!';
+                
+                // Show restart button
+                setTimeout(() => {
+                  gameContent.style.display = 'none';
+                  startScreen.style.display = 'block';
+                }, 3000);
+              } else {
+                generateRound(level);
+              }
+            }, 1000);
+          }
+        } else {
+          // Show error message
+          messageDisplay.textContent = 'Try again!';
+          messageDisplay.className = 'message error';
+          
+          setTimeout(() => {
+            messageDisplay.textContent = '';
+            messageDisplay.className = 'message';
+          }, 800);
+        }
+      }
+      
+      // Fisher-Yates shuffle algorithm
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+    });
+  </script>
+</body>
+</html>

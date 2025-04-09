@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Number Counting Game</title>
+  <style>
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #1D4ED8;
+      margin-bottom: 1rem;
+    }
+    
+    /* Scene selector */
+    .scene-selector {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .scene-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .scene-btn.active {
+      background-color: #3B82F6;
+      color: white;
+    }
+    
+    .scene-btn.inactive {
+      background-color: white;
+      color: #3B82F6;
+    }
+    
+    /* Game stats bar */
+    .game-stats {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 28rem;
+      margin-bottom: 1rem;
+    }
+    
+    .stat {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    /* Target number box */
+    .target-box {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 28rem;
+      text-align: center;
+    }
+    
+    .target-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .target-number {
+      font-size: 3.75rem;
+      font-weight: bold;
+      color: #2563EB;
+      margin: 0.5rem 0;
+    }
+    
+    /* Message area */
+    .message {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      height: 2rem;
+    }
+    
+    .success {
+      color: #059669;
+    }
+    
+    .error {
+      color: #DC2626;
+    }
+    
+    /* Items container */
+    .items-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      max-width: 36rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .item {
+      background-color: white;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .item:hover {
+      transform: scale(1.1);
+    }
+    
+    .item.selected {
+      box-shadow: 0 0 0 4px #3B82F6;
+    }
+    
+    .item-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    /* Selection counter */
+    .selection-counter {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .counter-label {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    .counter-value {
+      background-color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    /* Button styles */
+    .btn {
+      background-color: #3B82F6;
+      color: white;
+      font-size: 1.25rem;
+      font-weight: bold;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #2563EB;
+    }
+    
+    /* Scene background colors */
+    .bg-farm {
+      background-color: #DCFCE7;
+    }
+    
+    .bg-ocean {
+      background-color: #DBEAFE;
+    }
+    
+    .bg-space {
+      background-color: #E0E7FF;
+    }
+  </style>
+</head>
+<body>
+  <div id="container" class="container bg-farm">
+    <h1>Number Counting Game</h1>
+    
+    <!-- Scene selector -->
+    <div class="scene-selector">
+      <button class="scene-btn active" data-scene="farm">Farm</button>
+      <button class="scene-btn inactive" data-scene="ocean">Ocean</button>
+      <button class="scene-btn inactive" data-scene="space">Space</button>
+    </div>
+    
+    <!-- Game stats bar -->
+    <div class="game-stats">
+      <div class="stat">Score: <span id="score">0</span></div>
+      <div class="stat">Level: <span id="level">1</span></div>
+    </div>
+    
+    <!-- Target number -->
+    <div class="target-box">
+      <h2 class="target-title">Select <span id="target-number">3</span> items from the <span id="scene-name">Farm</span></h2>
+    </div>
+    
+    <!-- Message area -->
+    <div id="message" class="message"></div>
+    
+    <!-- Items display area -->
+    <div id="items-container" class="items-container"></div>
+    
+    <!-- Selection counter -->
+    <div class="selection-counter">
+      <span class="counter-label">Selected:</span>
+      <div class="counter-value"><span id="selection-count">0</span></div>
+      <span class="counter-label">/ <span id="target-count">3</span></span>
+    </div>
+    
+    <!-- Check button -->
+    <button id="check-btn" class="btn">Check</button>
+  </div>
+
+  <script>
+    // Game state
+    let scene = 'farm';
+    let targetNumber = 3;
+    let items = [];
+    let selection = [];
+    let score = 0;
+    let level = 1;
+    
+    // Scene items with image URLs instead of emojis
+    const sceneItems = {
+      farm: [
+        { id: 'apple', image: 'https://em-content.zobj.net/thumbs/120/apple/354/red-apple_1f34e.png', name: 'Apple' },
+        { id: 'cow', image: 'https://i.etsystatic.com/32486242/r/il/b2ddea/4962955872/il_1140xN.4962955872_64kv.jpg', name: 'Cow' },
+        { id: 'chicken', image: 'https://em-content.zobj.net/thumbs/120/apple/354/chicken_1f414.png', name: 'Chicken' },
+        { id: 'pig', image: 'https://png.pngtree.com/png-clipart/20201208/original/pngtree-pig-clipart-cartoon-pink-cute-piglet-material-vector-illustration-png-image_5538460.jpg', name: 'Pig' },
+        { id: 'sheep', image: 'https://em-content.zobj.net/thumbs/120/apple/354/ewe_1f411.png', name: 'Sheep' },
+        { id: 'carrot', image: 'https://em-content.zobj.net/thumbs/120/apple/354/carrot_1f955.png', name: 'Carrot' },
+        { id: 'corn', image: 'https://em-content.zobj.net/thumbs/120/apple/354/ear-of-corn_1f33d.png', name: 'Corn' },
+      ],
+      ocean: [
+        { id: 'fish', image: 'https://em-content.zobj.net/thumbs/120/apple/354/fish_1f41f.png', name: 'Fish' },
+        { id: 'octopus', image: 'https://em-content.zobj.net/thumbs/120/apple/354/octopus_1f419.png', name: 'Octopus' },
+        { id: 'dolphin', image: 'https://em-content.zobj.net/thumbs/120/apple/354/dolphin_1f42c.png', name: 'Dolphin' },
+        { id: 'crab', image: 'https://em-content.zobj.net/thumbs/120/apple/354/crab_1f980.png', name: 'Crab' },
+        { id: 'turtle', image: 'https://em-content.zobj.net/thumbs/120/apple/354/turtle_1f422.png', name: 'Turtle' },
+        { id: 'starfish', image: 'https://em-content.zobj.net/thumbs/120/apple/354/star_2b50.png', name: 'Star' },
+        { id: 'shell', image: 'https://em-content.zobj.net/thumbs/120/apple/354/spiral-shell_1f41a.png', name: 'Shell' },
+      ],
+      space: [
+        { id: 'rocket', image: 'https://em-content.zobj.net/thumbs/120/apple/354/rocket_1f680.png', name: 'Rocket' },
+        { id: 'star', image: 'https://em-content.zobj.net/thumbs/120/apple/354/star_2b50.png', name: 'Star' },
+        { id: 'planet', image: 'https://em-content.zobj.net/thumbs/120/apple/354/ringed-planet_1fa90.png', name: 'Planet' },
+        { id: 'alien', image: 'https://em-content.zobj.net/thumbs/120/apple/354/alien_1f47d.png', name: 'Alien' },
+        { id: 'astronaut', image: 'https://previews.123rf.com/images/zrzahid/zrzahid2408/zrzahid240892934/234753875-beautiful-professional-cartoon-character-design-vector-illustration.jpg', name: 'Astronaut' },
+        { id: 'moon', image: 'https://em-content.zobj.net/thumbs/120/apple/354/crescent-moon_1f319.png', name: 'Moon' },
+        { id: 'satellite', image: 'https://em-content.zobj.net/thumbs/120/apple/354/satellite_1f6f0-fe0f.png', name: 'Satellite' },
+      ],
+    };
+    
+    // Scene names
+    const sceneNames = {
+      farm: 'Farm',
+      ocean: 'Ocean',
+      space: 'Space',
+    };
+    
+    // DOM elements
+    const container = document.getElementById('container');
+    const sceneBtns = document.querySelectorAll('.scene-btn');
+    const sceneNameDisplay = document.getElementById('scene-name');
+    const scoreDisplay = document.getElementById('score');
+    const levelDisplay = document.getElementById('level');
+    const targetNumberDisplay = document.getElementById('target-number');
+    const targetCountDisplay = document.getElementById('target-count');
+    const messageDisplay = document.getElementById('message');
+    const itemsContainer = document.getElementById('items-container');
+    const selectionCountDisplay = document.getElementById('selection-count');
+    const checkBtn = document.getElementById('check-btn');
+    
+    // Initialize game
+    generateRound();
+    
+    // Scene switch events
+    sceneBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.classList.contains('active')) return;
+        
+        // Update scene
+        scene = btn.dataset.scene;
+        
+        // Update button states
+        sceneBtns.forEach(b => {
+          b.classList.remove('active', 'inactive');
+          b.classList.add(b === btn ? 'active' : 'inactive');
+        });
+        
+        // Update scene name
+        sceneNameDisplay.textContent = sceneNames[scene];
+        
+        // Update background color
+        container.className = `container bg-${scene}`;
+        
+        // Generate new round
+        generateRound();
+      });
+    });
+    
+    // Check button event
+    checkBtn.addEventListener('click', checkAnswer);
+    
+    // Generate a new round
+    function generateRound() {
+      // Calculate target number (1-10 based on level)
+      const maxNumber = Math.min(level + 2, 10);
+      targetNumber = Math.max(1, Math.floor(Math.random() * maxNumber) + 1);
+      
+      // Update displays
+      targetNumberDisplay.textContent = targetNumber;
+      targetCountDisplay.textContent = targetNumber;
+      
+      // Reset selection
+      selection = [];
+      selectionCountDisplay.textContent = '0';
+      
+      // Clear message
+      messageDisplay.textContent = '';
+      messageDisplay.className = 'message';
+      
+      // Generate items from all scenes
+      const combinedItems = [
+        ...sceneItems.farm,
+        ...sceneItems.ocean,
+        ...sceneItems.space
+      ];
+      const maxItemTypes = Math.min(level + 2, combinedItems.length);
+      const roundItemTypes = shuffleArray(combinedItems).slice(0, maxItemTypes);
+      
+      // Create items array
+      const totalItems = Math.min(targetNumber + 5, 15);
+      items = [];
+      
+      for (let i = 0; i < totalItems; i++) {
+        const itemType = roundItemTypes[Math.floor(Math.random() * roundItemTypes.length)];
+        items.push({
+          id: `${itemType.id}-${i}`,
+          type: itemType.id,
+          image: itemType.image,
+          name: itemType.name,
+          scene: Object.entries(sceneItems).find(([_, items]) => 
+            items.some(it => it.id === itemType.id)
+          )[0]
+        });
+      }
+      
+      // Render items
+      renderItems();
+    }
+    
+    // Render items
+    function renderItems() {
+      // Clear container
+      itemsContainer.innerHTML = '';
+      
+      // Render items
+      shuffleArray(items).forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'item';
+        itemElement.dataset.id = item.id;
+        
+        const imageElement = document.createElement('img');
+        imageElement.className = 'item-image';
+        imageElement.src = item.image;
+        imageElement.alt = item.name;
+        
+        itemElement.appendChild(imageElement);
+        itemElement.addEventListener('click', () => handleItemClick(item.id));
+        
+        itemsContainer.appendChild(itemElement);
+      });
+    }
+    
+    // Handle item click
+    function handleItemClick(itemId) {
+      const itemElement = document.querySelector(`.item[data-id="${itemId}"]`);
+      
+      // Check if already selected
+      const index = selection.indexOf(itemId);
+      
+      if (index === -1) {
+        // Add to selection
+        selection.push(itemId);
+        itemElement.classList.add('selected');
+      } else {
+        // Remove from selection
+        selection.splice(index, 1);
+        itemElement.classList.remove('selected');
+      }
+      
+      // Update selection count
+      selectionCountDisplay.textContent = selection.length;
+    }
+    
+    // Check answer
+    function checkAnswer() {
+      if (selection.length !== targetNumber) {
+        // Wrong number of items
+        messageDisplay.textContent = `Try again! Select ${targetNumber} items`;
+        messageDisplay.className = 'message error';
+        
+        // Clear message after delay
+        setTimeout(() => {
+          messageDisplay.textContent = '';
+          messageDisplay.className = 'message';
+        }, 1500);
+        return;
+      }
+      
+      // Check if all selected items are from the correct scene
+      const allCorrect = selection.every(itemId => {
+        const item = items.find(it => it.id === itemId);
+        return item.scene === scene;
+      });
+      
+      if (allCorrect) {
+        // Correct answer
+        messageDisplay.textContent = 'Well done!';
+        messageDisplay.className = 'message success';
+        
+        // Increase score
+        score++;
+        scoreDisplay.textContent = score;
+        
+        // Increase level based on score
+        if (score > 0 && score % 3 === 0) {
+          level = Math.min(level + 1, 10);
+          levelDisplay.textContent = level;
+        }
+        
+        // Delay before next round
+        setTimeout(() => {
+          generateRound();
+        }, 1500);
+      } else {
+        // Wrong scene items
+        messageDisplay.textContent = `Try again! Select items from the ${sceneNames[scene]}`;
+        messageDisplay.className = 'message error';
+        
+        // Clear message after delay
+        setTimeout(() => {
+          messageDisplay.textContent = '';
+          messageDisplay.className = 'message';
+        }, 1500);
+      }
+    }
+    
+    // Fisher-Yates shuffle algorithm
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+  </script>
+</body>
+</html>

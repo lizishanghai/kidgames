@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Letter Tracing Game</title>
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #EEF2FF; /* indigo-50 */
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #4338CA; /* indigo-700 */
+      margin-bottom: 1rem;
+    }
+    
+    /* Mode selector */
+    .mode-selector {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      width: 100%;
+      max-width: 28rem;
+    }
+    
+    .mode-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: bold;
+      border: 2px solid #4338CA; /* indigo-700 */
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.3s;
+    }
+    
+    .mode-btn.active {
+      background-color: #4338CA; /* indigo-700 */
+      color: white;
+    }
+    
+    .mode-btn.inactive {
+      background-color: white;
+      color: #4338CA; /* indigo-700 */
+    }
+    
+    /* Letter selector */
+    .letter-selector {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      max-width: 28rem;
+    }
+    
+    .letter-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    .letter-icon.completed {
+      background-color: #10B981; /* green-500 */
+      color: white;
+    }
+    
+    .letter-icon.uncompleted {
+      background-color: #E5E7EB; /* gray-200 */
+      color: #4B5563; /* gray-700 */
+    }
+    
+    .letter-icon.current {
+      box-shadow: 0 0 0 2px #3B82F6; /* blue-500 */
+    }
+    
+    /* Progress bar */
+    .progress-container {
+      width: 16rem;
+      height: 1rem;
+      background-color: #E5E7EB; /* gray-200 */
+      border-radius: 9999px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: #10B981; /* green-500 */
+      border-radius: 9999px;
+      transition: width 0.3s;
+    }
+    
+    /* Current letter display */
+    .current-letter {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .letter-heading {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .letter-display {
+      font-size: 2.5rem;
+      color: #4F46E5; /* indigo-600 */
+      font-weight: bold;
+    }
+    
+    .letter-instruction {
+      font-size: 0.875rem;
+      color: #6B7280; /* gray-600 */
+    }
+    
+    /* Canvas container */
+    .canvas-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    
+    #drawing-canvas {
+      border: 2px solid #D1D5DB; /* gray-300 */
+      border-radius: 0.5rem;
+      background-color: white;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+    
+    .celebration {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      animation: bounce 1s infinite;
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 0.5rem;
+    }
+    
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+    
+    /* Control buttons */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .btn {
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    
+    .btn-gray {
+      background-color: #6B7280; /* gray-500 */
+      color: white;
+    }
+    
+    .btn-gray:hover {
+      background-color: #4B5563; /* gray-600 */
+    }
+    
+    .btn-indigo {
+      background-color: #4F46E5; /* indigo-600 */
+      color: white;
+    }
+    
+    .btn-indigo:hover {
+      background-color: #4338CA; /* indigo-700 */
+    }
+    
+    .btn-purple {
+      background-color: #8B5CF6; /* violet-500 */
+      color: white;
+    }
+    
+    .btn-purple:hover {
+      background-color: #7C3AED; /* violet-600 */
+    }
+    
+    /* Game instructions */
+    .instructions {
+      margin-top: 2rem;
+      text-align: center;
+      max-width: 28rem;
+    }
+    
+    .instructions p {
+      color: #4B5563; /* gray-700 */
+    }
+    
+    /* Mode description */
+    .mode-description {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #F3F4F6; /* gray-100 */
+      border-radius: 0.5rem;
+      max-width: 28rem;
+      text-align: center;
+    }
+    
+    .mode-description p {
+      margin: 0;
+      color: #4B5563; /* gray-700 */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Letter Tracing Game</h1>
+    
+    <!-- Mode selector -->
+    <div class="mode-selector">
+      <div id="traversal-mode-btn" class="mode-btn active">Traversal Mode</div>
+      <div id="random-mode-btn" class="mode-btn inactive">Random Mode</div>
+    </div>
+    
+    <!-- Mode description -->
+    <div id="mode-description" class="mode-description">
+      <p>Traversal Mode: Practice letters one by one in order.</p>
+    </div>
+    
+    <!-- Letter selector -->
+    <div id="letter-selector" class="letter-selector"></div>
+    
+    <!-- Progress bar -->
+    <div class="progress-container">
+      <div id="progress-bar" class="progress-bar" style="width: 0%"></div>
+    </div>
+    
+    <!-- Current letter display -->
+    <div class="current-letter">
+      <h2 class="letter-heading">Trace the letter: <span id="current-letter-display" class="letter-display">A</span></h2>
+      <p id="letter-instruction" class="letter-instruction">Trace along the gray outline</p>
+    </div>
+    
+    <!-- Canvas -->
+    <div class="canvas-container">
+      <canvas id="drawing-canvas" width="200" height="200"></canvas>
+      <div id="celebration" class="celebration" style="display: none;">
+        🎉 Amazing! Round completed! 🎉
+      </div>
+    </div>
+    
+    <!-- Control buttons -->
+    <div class="controls">
+      <button id="reset-btn" class="btn btn-gray">Try Again</button>
+      <button id="next-btn" class="btn btn-indigo" style="display: none;">Next Letter</button>
+      <button id="new-round-btn" class="btn btn-purple" style="display: none;">New Round</button>
+    </div>
+    
+    <!-- Game instructions -->
+    <div class="instructions">
+      <p>
+        Trace the gray letter outlines to learn how to write letters! When you finish a letter, the progress bar will fill up, and you can move to the next letter.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Game state
+      let currentLetter = 'A';
+      let isDrawing = false;
+      let progress = 0;
+      let completedLetters = [];
+      let gameMode = 'traversal';
+      let currentRoundLetters = [];
+      
+      // All available letters
+      const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      
+      // Letter path data (simplified SVG paths for all 26 letters)
+      const letterPaths = {
+        'A': 'M 50,150 L 100,50 L 150,150 M 75,100 L 125,100',
+        'B': 'M 50,50 L 50,150 L 125,150 C 150,150 150,125 125,100 C 150,75 150,50 125,50 L 50,50',
+        'C': 'M 150,75 C 150,50 125,50 100,50 C 75,50 50,75 50,100 C 50,125 75,150 100,150 C 125,150 150,125 150,100',
+        'D': 'M 50,50 L 50,150 L 100,150 C 140,150 150,100 150,100 C 150,100 140,50 100,50 L 50,50',
+        'E': 'M 150,50 L 50,50 L 50,150 L 150,150 M 50,100 L 125,100',
+        'F': 'M 150,50 L 50,50 L 50,150 M 50,100 L 125,100',
+        'G': 'M 125,50 C 75,50 50,75 50,100 C 50,125 75,150 125,150 C 150,150 150,125 150,100 L 150,75 M 150,100 L 100,100',
+        'H': 'M 50,50 L 50,150 M 150,50 L 150,150 M 50,100 L 150,100',
+        'I': 'M 100,50 L 100,150',
+        'J': 'M 150,50 L 150,125 C 150,150 125,150 100,150 C 75,150 50,125 50,125',
+        'K': 'M 50,50 L 50,150 M 125,50 L 50,100 L 125,150',
+        'L': 'M 50,50 L 50,150 L 150,150',
+        'M': 'M 50,150 L 50,50 L 100,100 L 150,50 L 150,150',
+        'N': 'M 50,150 L 50,50 L 150,150 L 150,50',
+        'O': 'M 100,50 C 50,50 50,100 50,100 C 50,150 100,150 100,150 C 150,150 150,100 150,100 C 150,50 100,50 100,50',
+        'P': 'M 50,150 L 50,50 L 100,50 C 150,50 150,100 100,100 L 50,100',
+        'Q': 'M 100,50 C 50,50 50,100 50,100 C 50,150 100,150 100,150 C 150,150 150,100 150,100 C 150,50 100,50 100,50 M 125,125 L 150,150',
+        'R': 'M 50,150 L 50,50 L 100,50 C 150,50 150,100 100,100 L 50,100 M 100,100 L 150,150',
+        'S': 'M 150,75 C 150,50 125,50 100,50 C 75,50 50,75 50,75 C 50,100 150,100 150,125 C 150,150 125,150 100,150 C 75,150 50,125 50,125',
+        'T': 'M 50,50 L 150,50 M 100,50 L 100,150',
+        'U': 'M 50,50 L 50,125 C 50,150 75,150 100,150 C 125,150 150,150 150,125 L 150,50',
+        'V': 'M 50,50 L 100,150 L 150,50',
+        'W': 'M 25,50 L 50,150 L 100,75 L 150,150 L 175,50',
+        'X': 'M 50,50 L 150,150 M 50,150 L 150,50',
+        'Y': 'M 50,50 L 100,100 L 150,50 M 100,100 L 100,150',
+        'Z': 'M 50,50 L 150,50 L 50,150 L 150,150'
+      };
+      
+      // DOM elements
+      const canvas = document.getElementById('drawing-canvas');
+      const context = canvas.getContext('2d');
+      const progressBar = document.getElementById('progress-bar');
+      const letterSelector = document.getElementById('letter-selector');
+      const currentLetterDisplay = document.getElementById('current-letter-display');
+      const letterInstruction = document.getElementById('letter-instruction');
+      const resetBtn = document.getElementById('reset-btn');
+      const nextBtn = document.getElementById('next-btn');
+      const newRoundBtn = document.getElementById('new-round-btn');
+      const celebration = document.getElementById('celebration');
+      const traversalModeBtn = document.getElementById('traversal-mode-btn');
+      const randomModeBtn = document.getElementById('random-mode-btn');
+      const modeDescription = document.getElementById('mode-description');
+      
+      // Initialize canvas
+      context.lineWidth = 20;
+      context.lineCap = 'round';
+      context.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+      
+      // Initialize letter selector
+      initializeLetterSelector();
+      
+      // Initialize first letter
+      if (gameMode === 'random') {
+        generateRandomRound();
+      } else {
+        currentRoundLetters = allLetters.slice();
+        updateLetterSelector();
+      }
+      
+      drawLetterPath();
+      
+      // Register canvas events
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
+      
+      // Mobile device support
+      canvas.addEventListener('touchstart', handleTouch(startDrawing));
+      canvas.addEventListener('touchmove', handleTouch(draw));
+      canvas.addEventListener('touchend', stopDrawing);
+      canvas.addEventListener('touchcancel', stopDrawing);
+      
+      // Button events
+      resetBtn.addEventListener('click', resetLetter);
+      nextBtn.addEventListener('click', goToNextLetter);
+      newRoundBtn.addEventListener('click', generateNewRound);
+      traversalModeBtn.addEventListener('click', () => switchMode('traversal'));
+      randomModeBtn.addEventListener('click', () => switchMode('random'));
+      
+      // Initialize Letter Selector
+      function initializeLetterSelector() {
+        letterSelector.innerHTML = '';
+        
+        allLetters.forEach(letter => {
+          const letterIcon = document.createElement('div');
+          letterIcon.className = `letter-icon uncompleted ${letter === currentLetter ? 'current' : ''}`;
+          letterIcon.textContent = letter;
+          letterIcon.dataset.letter = letter;
+          
+          letterIcon.addEventListener('click', () => {
+            if (currentRoundLetters.includes(letter)) {
+              setCurrentLetter(letter);
+            }
+          });
+          
+          letterSelector.appendChild(letterIcon);
+        });
+      }
+      
+      // Update letter selector based on game mode
+      function updateLetterSelector() {
+        // Reset all letters to uncompleted and not current
+        Array.from(letterSelector.children).forEach(icon => {
+          const letter = icon.dataset.letter;
+          icon.className = 'letter-icon uncompleted';
+          
+          // If letter is in current round, make it selectable
+          if (currentRoundLetters.includes(letter)) {
+            icon.style.opacity = '1';
+            icon.style.cursor = 'pointer';
+          } else {
+            icon.style.opacity = '0.3';
+            icon.style.cursor = 'default';
+          }
+          
+          // If letter is completed in current round
+          if (completedLetters.includes(letter)) {
+            icon.classList.add('completed');
+          }
+          
+          // If letter is current
+          if (letter === currentLetter) {
+            icon.classList.add('current');
+          }
+        });
+      }
+      
+      // Switch game mode
+      function switchMode(newMode) {
+        if (gameMode === newMode) return;
+        
+        gameMode = newMode;
+        completedLetters = [];
+        
+        // Update UI
+        if (gameMode === 'traversal') {
+          traversalModeBtn.className = 'mode-btn active';
+          randomModeBtn.className = 'mode-btn inactive';
+          modeDescription.innerHTML = '<p>Traversal Mode: Practice letters one by one in order.</p>';
+          currentRoundLetters = allLetters.slice();
+        } else {
+          traversalModeBtn.className = 'mode-btn inactive';
+          randomModeBtn.className = 'mode-btn active';
+          modeDescription.innerHTML = '<p>Random Mode: Practice 5 random letters in each round.</p>';
+          generateRandomRound();
+        }
+        
+        // Reset to first letter in the round
+        setCurrentLetter(currentRoundLetters[0]);
+        updateLetterSelector();
+        newRoundBtn.style.display = 'none';
+      }
+      
+      // Generate a random round of 5 letters
+      function generateRandomRound() {
+        const shuffled = shuffleArray(allLetters.slice());
+        currentRoundLetters = shuffled.slice(0, 5);
+        completedLetters = [];
+        updateLetterSelector();
+      }
+      
+      // Generate a new round
+      function generateNewRound() {
+        completedLetters = [];
+        celebration.style.display = 'none';
+        
+        if (gameMode === 'random') {
+          generateRandomRound();
+        } else {
+          // For traversal mode, just reset completion status
+          updateLetterSelector();
+        }
+        
+        setCurrentLetter(currentRoundLetters[0]);
+        newRoundBtn.style.display = 'none';
+      }
+      
+      // Set current letter
+      function setCurrentLetter(letter) {
+        // Update current letter
+        currentLetter = letter;
+        currentLetterDisplay.textContent = letter;
+        
+        // Update letter selector highlight
+        updateLetterSelector();
+        
+        // Reset progress and canvas
+        progress = 0;
+        progressBar.style.width = '0%';
+        resetLetter();
+        
+        // Hide next button
+        nextBtn.style.display = 'none';
+      }
+      
+      // Draw letter path
+      function drawLetterPath() {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw letter path
+        context.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+        context.beginPath();
+        
+        // Use SVG path data to create path
+        const path = new Path2D(letterPaths[currentLetter]);
+        context.stroke(path);
+        
+        return path;
+      }
+      
+      // Handle touch events
+      function handleTouch(handler) {
+        return function(e) {
+          e.preventDefault();
+          if (e.touches.length > 0) {
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            const mouseEvent = {
+              offsetX: x,
+              offsetY: y
+            };
+            
+            handler(mouseEvent);
+          }
+        };
+      }
+      
+      // Start drawing
+      function startDrawing(e) {
+        const { offsetX, offsetY } = e;
+        
+        context.beginPath();
+        context.moveTo(offsetX, offsetY);
+        context.strokeStyle = '#10B981'; // green-500
+        isDrawing = true;
+        
+        // Check if on letter path
+        checkProgress(offsetX, offsetY);
+      }
+      
+      // Draw
+      function draw(e) {
+        if (!isDrawing) return;
+        
+        const { offsetX, offsetY } = e;
+        context.lineTo(offsetX, offsetY);
+        context.stroke();
+        
+        // Check if on letter path
+        checkProgress(offsetX, offsetY);
+      }
+      
+      // Stop drawing
+      function stopDrawing() {
+        if (!isDrawing) return;
+        
+        context.closePath();
+        isDrawing = false;
+        
+        // If progress is high enough, mark as completed
+        if (progress > 70) {
+          markLetterAsCompleted();
+        }
+      }
+      
+      // Check progress
+      function checkProgress(x, y) {
+        try {
+          // Create temporary path for checking
+          const path = new Path2D(letterPaths[currentLetter]);
+          
+          // Check if point is on or near letter outline
+          if (context.isPointInStroke(path, x, y)) {
+            progress = Math.min(progress + 2, 100);
+            progressBar.style.width = `${progress}%`;
+            
+            // Update instruction text
+            if (progress > 70) {
+              letterInstruction.textContent = 'Well done!';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking progress:', error);
+        }
+      }
+      
+      // Mark letter as completed
+      function markLetterAsCompleted() {
+        if (!completedLetters.includes(currentLetter)) {
+          completedLetters.push(currentLetter);
+          updateLetterSelector();
+          
+          // Show next button if there are more letters to complete
+          const currentIndex = currentRoundLetters.indexOf(currentLetter);
+          if (currentIndex < currentRoundLetters.length - 1) {
+            nextBtn.style.display = 'block';
+          }
+          
+          // Check if all letters in the round are completed
+          if (completedLetters.length === currentRoundLetters.length) {
+            celebration.style.display = 'flex';
+            newRoundBtn.style.display = 'block';
+            setTimeout(() => {
+              celebration.style.display = 'none';
+            }, 3000);
+          }
+        }
+      }
+      
+      // Go to next letter
+      function goToNextLetter() {
+        const currentIndex = currentRoundLetters.indexOf(currentLetter);
+        if (currentIndex < currentRoundLetters.length - 1) {
+          setCurrentLetter(currentRoundLetters[currentIndex + 1]);
+        }
+      }
+      
+      // Reset current letter
+      function resetLetter() {
+        drawLetterPath();
+        progress = 0;
+        progressBar.style.width = '0%';
+        letterInstruction.textContent = 'Trace along the gray outline';
+        
+        // Hide next button (if current letter is not completed)
+        if (!completedLetters.includes(currentLetter)) {
+          nextBtn.style.display = 'none';
+        }
+      }
+      
+      // Fisher-Yates shuffle algorithm
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+    });
+  </script>
+</body>
+</html>

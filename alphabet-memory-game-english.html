@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alphabet Memory Game</title>
+  <style>
+    /* Base styles */
+    body {
+      font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #EFF6FF; /* blue-50 */
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+      min-height: 100vh;
+    }
+    
+    h1 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #1D4ED8; /* blue-700 */
+      margin-bottom: 1rem;
+    }
+    
+    /* Game status bar */
+    .game-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 28rem;
+      margin-bottom: 1rem;
+    }
+    
+    .moves {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+    
+    .btn {
+      background-color: #10B981; /* green-500 */
+      color: white;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .btn:hover {
+      background-color: #059669; /* green-600 */
+    }
+    
+    /* Game win message */
+    .win-message {
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .win-title {
+      font-size: 1.875rem;
+      font-weight: bold;
+      color: #059669; /* green-600 */
+      margin-bottom: 1rem;
+    }
+    
+    .win-text {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    
+    /* Card area */
+    .card-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 28rem;
+    }
+    
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 5rem;
+      height: 6rem;
+      margin: 0.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+      border-width: 4px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card:hover {
+      transform: scale(1.05);
+    }
+    
+    .card-back {
+      background-color: #3B82F6; /* blue-500 */
+      border-color: #1D4ED8; /* blue-700 */
+      color: white;
+      font-size: 1.875rem;
+    }
+    
+    .card-front {
+      background-color: #FEF9C3; /* yellow-100 */
+      border-color: #FBBF24; /* yellow-400 */
+      font-size: 2.25rem;
+      font-weight: bold;
+    }
+    
+    /* Game instructions */
+    .instructions {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    
+    .instructions p {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: #4B5563; /* gray-700 */
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Alphabet Memory Game</h1>
+    
+    <div class="game-status">
+      <div class="moves">Moves: <span id="moves-count">0</span></div>
+      <button id="restart-btn" class="btn">Restart</button>
+    </div>
+    
+    <div id="win-container" class="win-message" style="display: none;">
+      <h2 class="win-title">Congratulations!</h2>
+      <p class="win-text">You completed the game in <span id="final-moves">0</span> moves!</p>
+      <button id="play-again-btn" class="btn">Play Again</button>
+    </div>
+    
+    <div id="card-grid" class="card-grid"></div>
+    
+    <div class="instructions">
+      <p>Find matching letters and pictures! For example: A and 🍎 (apple)</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Game state
+      let cards = [];
+      let flipped = [];
+      let solved = [];
+      let disabled = false;
+      let moves = 0;
+      
+      // Letter pairs
+      const allAlphabetPairs = [
+        { id: 1, letter: 'A', image: '🍎' },
+        { id: 2, letter: 'B', image: '🍌' },
+        { id: 3, letter: 'C', image: '🐱' },
+        { id: 4, letter: 'D', image: '🐶' },
+        { id: 5, letter: 'E', image: '🐘' },
+        { id: 6, letter: 'F', image: '🐟' },
+        { id: 7, letter: 'G', image: '🦒' },
+        { id: 8, letter: 'H', image: '🎩' },
+        { id: 9, letter: 'I', image: '🍦' },
+        { id: 10, letter: 'J', image: '🃏' },
+        { id: 11, letter: 'K', image: '🪁' },
+        { id: 12, letter: 'L', image: '🦁' },
+        { id: 13, letter: 'M', image: '🐒' },
+        { id: 14, letter: 'N', image: '🚫' },
+        { id: 15, letter: 'O', image: '🐙' },
+        { id: 16, letter: 'P', image: '🐧' },
+        { id: 17, letter: 'Q', image: '❓' },
+        { id: 18, letter: 'R', image: '💍' },
+        { id: 19, letter: 'S', image: '🐍' },
+        { id: 20, letter: 'T', image: '🌴' },
+        { id: 21, letter: 'U', image: '☂️' },
+        { id: 22, letter: 'V', image: '🚐' },
+        { id: 23, letter: 'W', image: '🐋' },
+        { id: 24, letter: 'X', image: '📦' },
+        { id: 25, letter: 'Y', image: '🟨' },
+        { id: 26, letter: 'Z', image: '🦓' }
+      ];
+      
+      // Element references
+      const cardGrid = document.getElementById('card-grid');
+      const movesCount = document.getElementById('moves-count');
+      const restartBtn = document.getElementById('restart-btn');
+      const winContainer = document.getElementById('win-container');
+      const finalMoves = document.getElementById('final-moves');
+      const playAgainBtn = document.getElementById('play-again-btn');
+      
+      // Initialize game
+      initializeGame();
+      
+      // Event listeners
+      restartBtn.addEventListener('click', initializeGame);
+      playAgainBtn.addEventListener('click', initializeGame);
+      
+      // Game initialization function
+      function initializeGame() {
+        // Reset game state
+        cards = [];
+        flipped = [];
+        solved = [];
+        disabled = false;
+        moves = 0;
+        movesCount.textContent = '0';
+        winContainer.style.display = 'none';
+        cardGrid.innerHTML = '';
+        
+        // Select 6 random pairs
+        const selectedPairs = shuffleArray([...allAlphabetPairs]).slice(0, 6);
+        
+        // Create card pairs (letter and image cards)
+        const cardPairs = [];
+        selectedPairs.forEach(pair => {
+          cardPairs.push({ ...pair, type: 'letter', matched: false });
+          cardPairs.push({ ...pair, type: 'image', matched: false });
+        });
+        
+        // Shuffle
+        cards = shuffleArray([...cardPairs]);
+        
+        // Render cards
+        cards.forEach((card, index) => {
+          const cardElement = document.createElement('div');
+          cardElement.className = 'card card-back';
+          cardElement.innerHTML = '?';
+          cardElement.dataset.index = index;
+          
+          cardElement.addEventListener('click', () => handleCardClick(index));
+          
+          cardGrid.appendChild(cardElement);
+        });
+      }
+      
+      // Handle card click
+      function handleCardClick(index) {
+        // If already disabled or flipped, don't do anything
+        if (disabled || flipped.includes(index) || solved.includes(index)) return;
+        
+        // Flip card
+        flipped.push(index);
+        updateCardDisplay(index, true);
+        
+        // Check if two cards are flipped
+        if (flipped.length === 2) {
+          disabled = true;
+          moves++;
+          movesCount.textContent = moves.toString();
+          
+          const [firstIndex, secondIndex] = flipped;
+          const firstCard = cards[firstIndex];
+          const secondCard = cards[secondIndex];
+          
+          // Check if match (same ID but different type)
+          if (firstCard.id === secondCard.id && firstCard.type !== secondCard.type) {
+            // Successful match
+            solved.push(firstIndex, secondIndex);
+            flipped = [];
+            disabled = false;
+            
+            // Check if game is won
+            if (solved.length === cards.length) {
+              finalMoves.textContent = moves.toString();
+              winContainer.style.display = 'block';
+            }
+          } else {
+            // No match, flip back
+            setTimeout(() => {
+              updateCardDisplay(firstIndex, false);
+              updateCardDisplay(secondIndex, false);
+              flipped = [];
+              disabled = false;
+            }, 1000);
+          }
+        }
+      }
+      
+      // Update card display
+      function updateCardDisplay(index, isFlipped) {
+        const cardElement = cardGrid.children[index];
+        const card = cards[index];
+        
+        if (isFlipped || solved.includes(index)) {
+          cardElement.className = 'card card-front';
+          cardElement.innerHTML = card.type === 'letter' ? card.letter : card.image;
+        } else {
+          cardElement.className = 'card card-back';
+          cardElement.innerHTML = '?';
+        }
+      }
+      
+      // Fisher-Yates shuffle algorithm
+      function shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+      }
+    });
+  </script>
+</body>
+</html>
